@@ -1,6 +1,49 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    dueDate: "",
+    workingDays: "5",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.dueDate) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:5000/api/assignments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          dueDate: formData.dueDate,
+          workingDays: formData.workingDays,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        router.push(`/timeline?id=${data.id}`);
+      } else {
+        console.error("Failed to create assignment");
+      }
+    } catch (error) {
+      console.error("Error creating assignment:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
       {/* TopAppBar */}
@@ -33,7 +76,7 @@ export default function Home() {
 
           {/* Centralized Form Component */}
           <div className="bg-surface-container-low border border-outline-variant p-8 md:p-12 rounded-2xl shadow-sm">
-            <form className="flex flex-col gap-8 text-left">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-8 text-left">
               {/* Field 1: Assignment Input */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-primary ml-1" htmlFor="assignment">What is the assignment?</label>
@@ -42,6 +85,9 @@ export default function Home() {
                   id="assignment" 
                   placeholder="e.g., Write a 5-page history paper on the Cold War" 
                   type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
 
@@ -54,6 +100,9 @@ export default function Home() {
                       className="w-full bg-surface-container-low border-none focus:bg-white focus:ring-2 focus:ring-primary rounded-xl px-4 py-4 text-base transition-all shadow-inner text-on-surface outline-none" 
                       id="due-date" 
                       type="date"
+                      required
+                      value={formData.dueDate}
+                      onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                     />
                   </div>
                 </div>
@@ -64,7 +113,8 @@ export default function Home() {
                   <select 
                     className="w-full bg-surface-container-low border-none focus:bg-white focus:ring-2 focus:ring-primary rounded-xl px-4 py-4 text-base transition-all shadow-inner text-on-surface outline-none appearance-none cursor-pointer" 
                     id="days-count"
-                    defaultValue="5"
+                    value={formData.workingDays}
+                    onChange={(e) => setFormData({ ...formData, workingDays: e.target.value })}
                   >
                     {[1, 2, 3, 4, 5, 6, 7].map(day => (
                       <option key={day} value={day}>{day} day{day > 1 ? 's' : ''} a week</option>
@@ -76,11 +126,12 @@ export default function Home() {
               {/* CTA Button */}
               <div className="mt-4">
                 <button 
-                  className="w-full bg-primary text-on-primary py-5 px-8 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3" 
+                  className="w-full bg-primary text-on-primary py-5 px-8 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70" 
                   type="submit"
+                  disabled={loading}
                 >
-                  <span className="material-symbols-outlined">bolt</span>
-                  Break it down
+                  <span className="material-symbols-outlined">{loading ? 'sync' : 'bolt'}</span>
+                  {loading ? 'Breaking it down...' : 'Break it down'}
                 </button>
               </div>
             </form>
