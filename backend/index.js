@@ -44,9 +44,16 @@ app.post('/api/assignments', async (req, res) => {
       }
     });
 
-    // TODO: Trigger task generation logic here
+    // Trigger task generation logic
+    await generateTasks(assignment);
     
-    res.status(201).json(assignment);
+    // Fetch assignment again with tasks included
+    const assignmentWithTasks = await prisma.assignment.findUnique({
+      where: { id: assignment.id },
+      include: { tasks: true }
+    });
+    
+    res.status(201).json(assignmentWithTasks);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create assignment', details: error.message });
   }
