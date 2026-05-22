@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import Link from "next/link";
 
 interface Task {
   id: number;
@@ -120,9 +121,8 @@ export default function Timeline() {
         <div className="flex items-center gap-8">
           <span className="text-xl font-bold text-primary">BiteSize</span>
           <nav className="hidden md:flex items-center gap-6">
-            <a className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/">Focus</a>
-            <a className="text-primary border-b-2 border-primary font-bold pb-1 text-sm hover:text-primary/80 transition-colors" href="/timeline">Timeline</a>
-            <a className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="#">Archive</a>
+            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/">Focus</Link>
+            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/archive">Archive</Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">
@@ -145,18 +145,18 @@ export default function Timeline() {
           <p className="text-sm font-medium text-on-surface-variant">Tiny steps, big results.</p>
         </div>
         <nav className="flex flex-col gap-2">
-          <a className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-[0.98]" href="/">
+          <Link className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-[0.98]" href="/">
             <span className="material-symbols-outlined">edit_note</span>
             <span className="text-sm font-medium">Plan</span>
-          </a>
-          <a className="flex items-center gap-3 p-3 bg-secondary-container text-on-secondary-container rounded-xl font-bold transition-all active:scale-[0.98]" href="/timeline">
+          </Link>
+          <Link className="flex items-center gap-3 p-3 bg-secondary-container text-on-secondary-container rounded-xl font-bold transition-all active:scale-[0.98]" href="/archive">
             <span className="material-symbols-outlined">checklist</span>
-            <span className="text-sm font-bold">Micro-Tasks</span>
-          </a>
-          <a className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-[0.98]" href="#">
+            <span className="text-sm font-bold">Archive</span>
+          </Link>
+          <Link className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-[0.98]" href="#">
             <span className="material-symbols-outlined">settings</span>
             <span className="text-sm font-medium">Settings</span>
-          </a>
+          </Link>
         </nav>
       </aside>
 

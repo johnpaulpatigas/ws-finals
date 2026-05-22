@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./context/AuthContext";
+import Link from "next/link";
 
 export default function Home() {
   const router = useRouter();
@@ -68,9 +69,8 @@ export default function Home() {
         <div className="flex items-center gap-8">
           <span className="text-xl font-bold text-primary">BiteSize</span>
           <nav className="hidden md:flex items-center gap-6">
-            <a className="text-primary border-b-2 border-primary font-bold pb-1 text-sm hover:text-primary/80 transition-colors" href="#">Focus</a>
-            <a className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/timeline">Timeline</a>
-            <a className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="#">Archive</a>
+            <Link className="text-primary border-b-2 border-primary font-bold pb-1 text-sm hover:text-primary/80 transition-colors" href="/">Focus</Link>
+            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/archive">Archive</Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">
