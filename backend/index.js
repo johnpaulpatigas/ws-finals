@@ -36,6 +36,24 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Get all assignments for the logged-in user
+app.get('/api/assignments', protect, async (req, res) => {
+  try {
+    const assignments = await prisma.assignment.findMany({
+      where: { userId: req.user.id },
+      include: { 
+        tasks: {
+          orderBy: { date: 'asc' }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch assignments', details: error.message });
+  }
+});
+
 // Create a new assignment
 app.post('/api/assignments', protect, async (req, res) => {
   const { title, dueDate, workingDays } = req.body;
