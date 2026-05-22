@@ -3,6 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const prisma = require('./db');
 const { generateTasks } = require('./utils/taskGenerator');
+const authRoutes = require('./routes/auth');
+const { protect } = require('./middleware/auth');
 
 dotenv.config();
 
@@ -11,6 +13,9 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
 
 // Health check route
 app.get('/api/health', async (req, res) => {
@@ -32,7 +37,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Create a new assignment
-app.post('/api/assignments', async (req, res) => {
+app.post('/api/assignments', protect, async (req, res) => {
   const { title, dueDate, workingDays } = req.body;
   
   try {
@@ -41,7 +46,7 @@ app.post('/api/assignments', async (req, res) => {
         title,
         dueDate: new Date(dueDate),
         workingDays: parseInt(workingDays) || 5,
-        // For now, we'll omit userId until auth is fully implemented
+        userId: req.user.id
       }
     });
 
@@ -61,7 +66,7 @@ app.post('/api/assignments', async (req, res) => {
 });
 
 // Get assignment with tasks
-app.get('/api/assignments/:id', async (req, res) => {
+app.get('/api/assignments/:id', protect, async (req, res) => {
   const { id } = req.params;
   
   try {
@@ -74,6 +79,11 @@ app.get('/api/assignments/:id', async (req, res) => {
       return res.status(404).json({ error: 'Assignment not found' });
     }
 
+    // Check if user owns the assignment
+    if (assignment.userId !== req.user.id) {
+      return res.status(401).json({ error: 'Not authorized' });
+    }
+
     res.json(assignment);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch assignment', details: error.message });
@@ -81,17 +91,31 @@ app.get('/api/assignments/:id', async (req, res) => {
 });
 
 // Update task status
-app.patch('/api/tasks/:id', async (req, res) => {
+app.patch('/api/tasks/:id', protect, async (req, res) => {
   const { id } = req.params;
   const { completed } = req.body;
 
   try {
-    const task = await prisma.task.update({
+    // Fetch task first to check ownership
+    const task = await prisma.task.findUnique({
+      where: { id: parseInt(id) },
+      include: { assignment: true }
+    });
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    if (task.assignment.userId !== req.user.id) {
+      return res.status(401).json({ error: 'Not authorized' });
+    }
+
+    const updatedTask = await prisma.task.update({
       where: { id: parseInt(id) },
       data: { completed }
     });
 
-    res.json(task);
+    res.json(updatedTask);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update task', details: error.message });
   }
