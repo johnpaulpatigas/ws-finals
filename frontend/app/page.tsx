@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "./context/AuthContext";
 
 export default function Home() {
   const router = useRouter();
+  const { user, token, logout, isLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -13,9 +15,15 @@ export default function Home() {
     workingDays: "5",
   });
 
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.dueDate) return;
+    if (!formData.title || !formData.dueDate || !token) return;
 
     setLoading(true);
     try {
@@ -23,6 +31,7 @@ export default function Home() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
           title: formData.title,
@@ -44,6 +53,14 @@ export default function Home() {
     }
   };
 
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <span className="material-symbols-outlined animate-spin text-primary text-4xl">sync</span>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
       {/* TopAppBar */}
@@ -56,9 +73,16 @@ export default function Home() {
             <a className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="#">Archive</a>
           </nav>
         </div>
-        <div className="flex items-center">
-          <button className="text-primary flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors">
-            <span className="material-symbols-outlined">account_circle</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-on-surface-variant hidden sm:block">
+            {user.name}
+          </span>
+          <button 
+            onClick={logout}
+            className="text-on-surface-variant flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
+            title="Log Out"
+          >
+            <span className="material-symbols-outlined">logout</span>
           </button>
         </div>
       </header>

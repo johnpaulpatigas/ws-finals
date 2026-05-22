@@ -1,38 +1,117 @@
+"use client";
+
+import { useEffect, useState, use } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
+
+interface Task {
+  id: number;
+  title: string;
+  date: string;
+  duration: string;
+  category: string;
+  icon: string;
+  completed: boolean;
+}
+
+interface Assignment {
+  id: number;
+  title: string;
+  dueDate: string;
+  tasks: Task[];
+}
+
 export default function Timeline() {
-  const tasks = [
-    {
-      date: "Nov 5",
-      title: "Find 3 academic sources.",
-      duration: "30 mins",
-      category: "Research",
-      icon: "library_books",
-      completed: true,
-    },
-    {
-      date: "Nov 7",
-      title: "Read sources and highlight 5 key quotes.",
-      duration: "45 mins",
-      category: "Analysis",
-      icon: "edit_note",
-      completed: false,
-    },
-    {
-      date: "Nov 10",
-      title: "Write a rough outline with a thesis statement.",
-      duration: "20 mins",
-      category: "Drafting",
-      icon: "format_list_bulleted",
-      completed: false,
-    },
-    {
-      date: "Nov 12",
-      title: "Write the Intro and Body Paragraph 1.",
-      duration: "40 mins",
-      category: "Writing",
-      icon: "history_edu",
-      completed: false,
-    },
-  ];
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const assignmentId = searchParams.get("id");
+  const { user, token, logout, isLoading: authLoading } = useAuth();
+  
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    const fetchAssignment = async () => {
+      if (!assignmentId || !token) return;
+
+      try {
+        const response = await fetch(`http://localhost:5000/api/assignments/${assignmentId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setAssignment(data);
+        } else {
+          setError("Failed to load assignment details.");
+        }
+      } catch (err) {
+        setError("Something went wrong while fetching data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user && token) {
+      fetchAssignment();
+    }
+  }, [assignmentId, token, user]);
+
+  const toggleTask = async (taskId: number, currentStatus: boolean) => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ completed: !currentStatus })
+      });
+
+      if (response.ok) {
+        setAssignment(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            tasks: prev.tasks.map(t => t.id === taskId ? { ...t, completed: !currentStatus } : t)
+          };
+        });
+      }
+    } catch (err) {
+      console.error("Failed to update task:", err);
+    }
+  };
+
+  if (authLoading || (user && loading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <span className="material-symbols-outlined animate-spin text-primary text-4xl">sync</span>
+      </div>
+    );
+  }
+
+  if (error || !assignment) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
+        <h1 className="text-2xl font-bold text-on-surface mb-2">Oops!</h1>
+        <p className="text-on-surface-variant mb-6">{error || "Assignment not found."}</p>
+        <button onClick={() => router.push('/')} className="bg-primary text-on-primary px-6 py-2 rounded-xl font-bold">
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
@@ -46,8 +125,16 @@ export default function Timeline() {
             <a className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="#">Archive</a>
           </nav>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="material-symbols-outlined text-primary">account_circle</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-on-surface-variant hidden sm:block">
+            {user?.name}
+          </span>
+          <button 
+            onClick={logout}
+            className="text-on-surface-variant flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
+          >
+            <span className="material-symbols-outlined">logout</span>
+          </button>
         </div>
       </header>
 
@@ -71,43 +158,42 @@ export default function Timeline() {
             <span className="text-sm font-medium">Settings</span>
           </a>
         </nav>
-        <div className="mt-auto p-4 bg-primary-container rounded-xl">
-          <p className="text-xs font-bold text-on-primary-container">Next Milestone:</p>
-          <p className="text-base font-bold text-on-primary-container">Source Search</p>
-          <div className="w-full bg-on-primary-container/20 h-1.5 rounded-full mt-2 overflow-hidden">
-            <div className="bg-on-primary-container h-full rounded-full w-1/3"></div>
-          </div>
-        </div>
       </aside>
 
-      <main className="max-w-[720px] mx-auto px-container-padding-mobile md:px-0 py-section-gap w-full lg:ml-[25%] xl:ml-[35%]">
+      <main className="max-w-[720px] mx-auto px-container-padding-mobile md:px-0 py-section-gap w-full lg:ml-[30%] xl:ml-[35%]">
         {/* Success Header */}
         <div className="mb-12 text-center md:text-left">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-container text-on-primary-container mb-4">
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
           </div>
           <h1 className="text-3xl font-bold text-on-surface mb-2">We&apos;ve broken it down for you.</h1>
-          <p className="text-lg text-on-surface-variant leading-relaxed">Your Research Paper project is now in manageable chunks.</p>
+          <p className="text-lg text-on-surface-variant leading-relaxed">Your project <span className="text-primary font-bold">"{assignment.title}"</span> is now in manageable chunks.</p>
         </div>
 
         {/* Timeline Section */}
         <div className="relative space-y-12">
-          {tasks.map((task, index) => (
-            <div key={index} className="relative pl-10">
-              {index !== tasks.length - 1 && <div className="timeline-line"></div>}
-              <div className={`absolute left-0 top-1 w-6 h-6 rounded-full bg-surface border-2 flex items-center justify-center z-10 ${task.completed ? 'border-primary' : 'border-outline-variant'}`}>
+          {assignment.tasks.map((task, index) => (
+            <div key={task.id} className="relative pl-10">
+              {index !== assignment.tasks.length - 1 && <div className="timeline-line"></div>}
+              <div 
+                onClick={() => toggleTask(task.id, task.completed)}
+                className={`absolute left-0 top-1 w-6 h-6 rounded-full bg-surface border-2 flex items-center justify-center z-10 cursor-pointer transition-colors ${task.completed ? 'border-primary' : 'border-outline-variant'}`}
+              >
                 {task.completed && <div className="w-2 h-2 rounded-full bg-primary"></div>}
               </div>
               <div className="bg-surface-container-lowest border border-outline-variant p-6 rounded-2xl task-card-shadow transition-all active:scale-[0.98] cursor-pointer hover:border-primary/30">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <span className={`text-xs font-bold uppercase tracking-wider mb-1 block ${task.completed ? 'text-primary' : 'text-on-surface-variant'}`}>{task.date}</span>
-                    <h3 className="text-lg font-bold text-on-surface leading-tight">{task.title}</h3>
+                  <div onClick={() => toggleTask(task.id, task.completed)}>
+                    <span className={`text-xs font-bold uppercase tracking-wider mb-1 block ${task.completed ? 'text-primary' : 'text-on-surface-variant'}`}>
+                      {new Date(task.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                    <h3 className={`text-lg font-bold text-on-surface leading-tight ${task.completed ? 'line-through opacity-50' : ''}`}>{task.title}</h3>
                   </div>
                   <input 
                     className="w-6 h-6 rounded border-outline text-primary focus:ring-primary cursor-pointer" 
                     type="checkbox" 
-                    defaultChecked={task.completed}
+                    checked={task.completed}
+                    onChange={() => toggleTask(task.id, task.completed)}
                   />
                 </div>
                 <div className="flex items-center gap-4">
@@ -116,7 +202,7 @@ export default function Timeline() {
                     <span className="text-xs font-semibold">{task.duration}</span>
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-1 bg-secondary-container/30 rounded-full text-secondary">
-                    <span className="material-symbols-outlined text-[18px]">{task.icon}</span>
+                    <span className="material-symbols-outlined text-[18px]">{task.icon || 'task_alt'}</span>
                     <span className="text-xs font-semibold">{task.category}</span>
                   </div>
                 </div>
@@ -143,21 +229,6 @@ export default function Timeline() {
             </button>
           </div>
         </section>
-
-        {/* Aesthetic Imagery */}
-        <div className="mt-section-gap">
-          <div className="rounded-3xl overflow-hidden h-[300px] border border-outline-variant bg-surface-container-low relative shadow-inner">
-            <img 
-              alt="Minimalist workspace" 
-              className="w-full h-full object-cover opacity-60" 
-              src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=2070&auto=format&fit=crop"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
-            <div className="absolute bottom-8 left-8 right-8 text-center">
-              <p className="text-2xl font-semibold text-on-surface italic tracking-tight tracking-wide">&quot;Focus on the step, not the mountain.&quot;</p>
-            </div>
-          </div>
-        </div>
       </main>
 
       {/* Footer (Mobile/Tablet only) */}
