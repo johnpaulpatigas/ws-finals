@@ -108,10 +108,10 @@ app.get('/api/assignments/:id', protect, async (req, res) => {
   }
 });
 
-// Update task status
+// Update task details
 app.patch('/api/tasks/:id', protect, async (req, res) => {
   const { id } = req.params;
-  const { completed } = req.body;
+  const { completed, title, duration, category, date } = req.body;
 
   try {
     // Fetch task first to check ownership
@@ -130,12 +130,46 @@ app.patch('/api/tasks/:id', protect, async (req, res) => {
 
     const updatedTask = await prisma.task.update({
       where: { id: parseInt(id) },
-      data: { completed }
+      data: { 
+        completed: completed !== undefined ? completed : task.completed,
+        title: title || task.title,
+        duration: duration || task.duration,
+        category: category || task.category,
+        date: date ? new Date(date) : task.date
+      }
     });
 
     res.json(updatedTask);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update task', details: error.message });
+  }
+});
+
+// Delete a task
+app.delete('/api/tasks/:id', protect, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const task = await prisma.task.findUnique({
+      where: { id: parseInt(id) },
+      include: { assignment: true }
+    });
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    if (task.assignment.userId !== req.user.id) {
+      return res.status(401).json({ error: 'Not authorized' });
+    }
+
+    await prisma.task.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.json({ message: 'Task deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete task', details: error.message });
   }
 });
 

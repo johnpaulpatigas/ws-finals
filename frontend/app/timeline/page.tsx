@@ -32,6 +32,8 @@ export default function Timeline() {
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editFormData, setEditFormData] = useState({ title: "", duration: "" });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -92,6 +94,65 @@ export default function Timeline() {
       }
     } catch (err) {
       console.error("Failed to update task:", err);
+    }
+  };
+
+  const deleteTask = async (taskId: number) => {
+    if (!token || !confirm("Delete this task?")) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setAssignment(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            tasks: prev.tasks.filter(t => t.id !== taskId)
+          };
+        });
+      }
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+    }
+  };
+
+  const startEditing = (task: Task) => {
+    setEditingTaskId(task.id);
+    setEditFormData({ title: task.title, duration: task.duration });
+  };
+
+  const saveEdit = async (taskId: number) => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(editFormData)
+      });
+
+      if (response.ok) {
+        const updatedTask = await response.json();
+        setAssignment(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            tasks: prev.tasks.map(t => t.id === taskId ? { ...t, ...updatedTask } : t)
+          };
+        });
+        setEditingTaskId(null);
+      }
+    } catch (err) {
+      console.error("Failed to save task:", err);
     }
   };
 
@@ -219,26 +280,76 @@ export default function Timeline() {
               >
                 {task.completed && <div className="w-2 h-2 rounded-full bg-primary"></div>}
               </div>
-              <div className="bg-surface-container-lowest border border-outline-variant p-6 rounded-2xl task-card-shadow transition-all active:scale-[0.98] cursor-pointer hover:border-primary/30">
+              <div className="bg-surface-container-lowest border border-outline-variant p-6 rounded-2xl task-card-shadow transition-all group hover:border-primary/30">
                 <div className="flex justify-between items-start mb-4">
-                  <div onClick={() => toggleTask(task.id, task.completed)}>
+                  <div className="flex-grow">
                     <span className={`text-xs font-bold uppercase tracking-wider mb-1 block ${task.completed ? 'text-primary' : 'text-on-surface-variant'}`}>
                       {new Date(task.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
-                    <h3 className={`text-lg font-bold text-on-surface leading-tight ${task.completed ? 'line-through opacity-50' : ''}`}>{task.title}</h3>
+                    
+                    {editingTaskId === task.id ? (
+                      <div className="flex flex-col gap-2 mt-1">
+                        <input 
+                          className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-base outline-none focus:border-primary"
+                          value={editFormData.title}
+                          onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => saveEdit(task.id)} className="text-xs font-bold text-primary px-3 py-1 bg-primary-container rounded-md">Save</button>
+                          <button onClick={() => setEditingTaskId(null)} className="text-xs font-bold text-on-surface-variant px-3 py-1 bg-surface-container rounded-md">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <h3 className={`text-lg font-bold text-on-surface leading-tight ${task.completed ? 'line-through opacity-50' : ''}`}>
+                        {task.title}
+                      </h3>
+                    )}
                   </div>
-                  <input 
-                    className="w-6 h-6 rounded border-outline text-primary focus:ring-primary cursor-pointer" 
-                    type="checkbox" 
-                    checked={task.completed}
-                    onChange={() => toggleTask(task.id, task.completed)}
-                  />
+                  
+                  <div className="flex items-center gap-2">
+                    {!editingTaskId && (
+                      <>
+                        <button 
+                          onClick={() => startEditing(task)}
+                          className="text-on-surface-variant hover:text-primary p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Edit task"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                        <button 
+                          onClick={() => deleteTask(task.id)}
+                          className="text-on-surface-variant hover:text-error p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Delete task"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                      </>
+                    )}
+                    <input 
+                      className="w-6 h-6 rounded border-outline text-primary focus:ring-primary cursor-pointer ml-2" 
+                      type="checkbox" 
+                      checked={task.completed}
+                      onChange={() => toggleTask(task.id, task.completed)}
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-container rounded-full text-on-surface-variant">
-                    <span className="material-symbols-outlined text-[18px]">schedule</span>
-                    <span className="text-xs font-semibold">{task.duration}</span>
-                  </div>
+                  {editingTaskId === task.id ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-container rounded-full text-on-surface-variant">
+                      <span className="material-symbols-outlined text-[18px]">schedule</span>
+                      <input 
+                        className="bg-transparent border-none outline-none text-xs font-semibold w-16"
+                        value={editFormData.duration}
+                        onChange={(e) => setEditFormData({ ...editFormData, duration: e.target.value })}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-container rounded-full text-on-surface-variant">
+                      <span className="material-symbols-outlined text-[18px]">schedule</span>
+                      <span className="text-xs font-semibold">{task.duration}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5 px-3 py-1 bg-secondary-container/30 rounded-full text-secondary">
                     <span className="material-symbols-outlined text-[18px]">{task.icon || 'task_alt'}</span>
                     <span className="text-xs font-semibold">{task.category}</span>
