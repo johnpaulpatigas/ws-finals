@@ -183,6 +183,55 @@ app.delete('/api/tasks/:id', protect, async (req, res) => {
   }
 });
 
+// Get productivity stats for the user
+app.get('/api/stats', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const assignments = await prisma.assignment.findMany({
+      where: { userId },
+      include: { tasks: true }
+    });
+
+    const allTasks = assignments.flatMap(a => a.tasks);
+    const completedTasks = allTasks.filter(t => t.completed);
+    
+    // Calculate stats
+    const totalAssignments = assignments.length;
+    const totalTasks = allTasks.length;
+    const completedTasksCount = completedTasks.length;
+    const progressPercentage = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 0;
+
+    // Group by category
+    const categoryStats = allTasks.reduce((acc, task) => {
+      acc[task.category] = (acc[task.category] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Most productive category (by completion)
+    const categoryCompletion = completedTasks.reduce((acc, task) => {
+      acc[task.category] = (acc[task.category] || 0) + 1;
+      return acc;
+    }, {});
+
+    res.json({
+      totalAssignments,
+      totalTasks,
+      completedTasksCount,
+      progressPercentage,
+      categoryStats,
+      categoryCompletion,
+      recentAssignments: assignments.slice(0, 5).map(a => ({
+        id: a.id,
+        title: a.title,
+        progress: a.tasks.length > 0 ? (a.tasks.filter(t => t.completed).length / a.tasks.length) * 100 : 0
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch stats', details: error.message });
+  }
+});
+
 // Delete an assignment
 app.delete('/api/assignments/:id', protect, async (req, res) => {
   const { id } = req.params;
