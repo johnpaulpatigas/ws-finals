@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link";
 import { generateICS, downloadFile, CalendarEvent } from "../utils/calendar";
+import confetti from "canvas-confetti";
 
 interface Task {
   id: number;
@@ -34,6 +35,7 @@ export default function Timeline() {
   const [error, setError] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState({ title: "", duration: "" });
+  const [focusMode, setFocusMode] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -86,9 +88,21 @@ export default function Timeline() {
       if (response.ok) {
         setAssignment(prev => {
           if (!prev) return null;
+          const newTasks = prev.tasks.map(t => t.id === taskId ? { ...t, completed: !currentStatus } : t);
+          
+          // Trigger confetti if all tasks are now completed
+          if (!currentStatus && newTasks.every(t => t.completed)) {
+            confetti({
+              particleCount: 150,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ['#476550', '#7d9d85', '#efeee7']
+            });
+          }
+          
           return {
             ...prev,
-            tasks: prev.tasks.map(t => t.id === taskId ? { ...t, completed: !currentStatus } : t)
+            tasks: newTasks
           };
         });
       }
@@ -270,10 +284,36 @@ export default function Timeline() {
       </aside>
 
       <main className="max-w-[720px] mx-auto px-container-padding-mobile md:px-0 py-section-gap w-full lg:ml-[30%] xl:ml-[35%]">
+        {/* Progress Header */}
+        <div className="sticky top-[73px] bg-background/95 backdrop-blur-sm z-40 py-4 -mx-4 px-4 mb-8 border-b border-outline-variant/30">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs font-bold text-primary uppercase tracking-widest">Overall Progress</span>
+            <span className="text-xs font-bold text-primary">
+              {Math.round((assignment.tasks.filter(t => t.completed).length / assignment.tasks.length) * 100)}%
+            </span>
+          </div>
+          <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+            <div 
+              className="bg-primary h-full rounded-full transition-all duration-1000 ease-out" 
+              style={{ width: `${(assignment.tasks.filter(t => t.completed).length / assignment.tasks.length) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+
         {/* Success Header */}
         <div className="mb-12 text-center md:text-left">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-container text-on-primary-container mb-4">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+          <div className="flex justify-between items-start">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-container text-on-primary-container mb-4">
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            </div>
+            
+            <button 
+              onClick={() => setFocusMode(!focusMode)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${focusMode ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
+            >
+              <span className="material-symbols-outlined text-[18px]">{focusMode ? 'visibility' : 'filter_center_focus'}</span>
+              {focusMode ? 'Show All' : 'Focus Mode'}
+            </button>
           </div>
           <h1 className="text-3xl font-bold text-on-surface mb-2">We&apos;ve broken it down for you.</h1>
           <p className="text-lg text-on-surface-variant leading-relaxed">Your project <span className="text-primary font-bold">"{assignment.title}"</span> is now in manageable chunks.</p>
@@ -281,9 +321,12 @@ export default function Timeline() {
 
         {/* Timeline Section */}
         <div className="relative space-y-12">
-          {assignment.tasks.map((task, index) => (
+          {assignment.tasks
+            .filter(task => !focusMode || !task.completed)
+            .slice(0, focusMode ? 1 : undefined)
+            .map((task, index, filteredArray) => (
             <div key={task.id} className="relative pl-10">
-              {index !== assignment.tasks.length - 1 && <div className="timeline-line"></div>}
+              {index !== filteredArray.length - 1 && <div className="timeline-line"></div>}
               <div 
                 onClick={() => toggleTask(task.id, task.completed)}
                 className={`absolute left-0 top-1 w-6 h-6 rounded-full bg-surface border-2 flex items-center justify-center z-10 cursor-pointer transition-colors ${task.completed ? 'border-primary' : 'border-outline-variant'}`}

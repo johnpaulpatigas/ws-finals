@@ -131,12 +131,15 @@ export default function Archive() {
         )}
 
         {assignments.length === 0 && !loading ? (
-          <div className="text-center py-20 bg-surface-container-low border border-dashed border-outline-variant rounded-3xl">
-            <span className="material-symbols-outlined text-6xl text-outline mb-4">folder_open</span>
-            <h2 className="text-xl font-bold text-on-surface">No assignments yet</h2>
-            <p className="text-on-surface-variant mb-8">Ready to break down your first big project?</p>
-            <Link href="/" className="bg-primary text-on-primary px-8 py-3 rounded-2xl font-bold shadow-lg">
-              Start Now
+          <div className="text-center py-24 px-6 bg-surface-container-low border-2 border-dashed border-outline-variant rounded-[32px] flex flex-col items-center">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+              <span className="material-symbols-outlined text-4xl text-primary">auto_awesome</span>
+            </div>
+            <h2 className="text-2xl font-bold text-on-surface mb-3">Ready for your next big win?</h2>
+            <p className="text-on-surface-variant mb-10 max-w-[400px]">Break down your overwhelming projects into tiny, manageable bites today.</p>
+            <Link href="/" className="bg-primary text-on-primary px-10 py-4 rounded-2xl font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center gap-3">
+              <span className="material-symbols-outlined">add</span>
+              Start Breaking it Down
             </Link>
           </div>
         ) : (
