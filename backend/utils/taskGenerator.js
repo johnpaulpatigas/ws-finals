@@ -40,14 +40,21 @@ async function generateWithAI(assignment, apiKey) {
   const prompt = `
     Break down the following assignment into 5-8 specific, actionable micro-tasks.
     Assignment Title: "${assignment.title}"
-    Due Date: ${assignment.dueDate}
+    Current Date: ${new Date().toDateString()}
+    Target Due Date: ${new Date(assignment.dueDate).toDateString()}
+    The user works ${assignment.workingDays || 5} days per week.
+
+    Guidelines:
+    - Each task should take 15-60 minutes.
+    - Be extremely specific (e.g., "Find 3 primary sources" instead of "Research").
+    - Assign a "phase" (0.1 to 0.9) representing the relative position in the project timeline.
     
     Return the response as a valid JSON array of objects. Each object must have:
     - title: (string) Specific task name
     - category: (string) One of: Planning, Research, Analysis, Drafting, Writing, Review
-    - icon: (string) A relevant Material Icon name (e.g., edit, search, book, done)
-    - duration: (string) Estimated time (e.g., "30 mins")
-    - phase: (number) A value between 0.1 and 0.9 representing when this should occur in the timeline.
+    - icon: (string) A relevant Material Icon name (e.g., edit, search, book, menu_book, draw, rate_review)
+    - duration: (string) Estimated time (e.g., "30 mins", "1 hour")
+    - phase: (number) 0.1 to 0.9
 
     JSON only, no markdown:
   `;
