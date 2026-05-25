@@ -156,6 +156,16 @@ export default function Timeline() {
     }
   };
 
+  const handleExportNotion = () => {
+    if (!assignment) return;
+
+    const markdown = `# ${assignment.title}\n\n` + 
+      assignment.tasks.map(task => `- [${task.completed ? 'x' : ' '}] **${task.title}** (${task.duration}) - ${task.category}`).join('\n');
+    
+    navigator.clipboard.writeText(markdown);
+    alert("Copied to clipboard as Markdown! You can now paste it into Notion.");
+  };
+
   const handleExportCalendar = () => {
     if (!assignment || !assignment.tasks.length) return;
 
@@ -364,7 +374,10 @@ export default function Timeline() {
         <section className="mt-section-gap border-t border-outline-variant/30 pt-12">
           <h2 className="text-xl font-bold text-on-surface mb-6 text-center">Ready to get started?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="flex items-center justify-center gap-2 py-3 px-6 border border-outline text-on-surface rounded-xl hover:bg-surface-container-high transition-all active:scale-95">
+            <button 
+              onClick={handleExportNotion}
+              className="flex items-center justify-center gap-2 py-3 px-6 border border-outline text-on-surface rounded-xl hover:bg-surface-container-high transition-all active:scale-95"
+            >
               <span className="material-symbols-outlined">ios_share</span>
               <span className="text-sm font-bold">Export to Notion</span>
             </button>
