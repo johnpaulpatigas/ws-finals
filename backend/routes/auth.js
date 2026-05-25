@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../db');
+const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -11,6 +12,27 @@ const generateToken = (id) => {
     expiresIn: '30d',
   });
 };
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+router.put('/profile', protect, async (req, res) => {
+  const { name } = req.body;
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { name },
+    });
+
+    res.json({
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // @desc    Register new user
 // @route   POST /api/auth/register

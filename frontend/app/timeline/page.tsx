@@ -191,7 +191,7 @@ export default function Timeline() {
             <span className="material-symbols-outlined">checklist</span>
             <span className="text-sm font-bold">Archive</span>
           </Link>
-          <Link className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-[0.98]" href="#">
+          <Link className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-[0.98]" href="/settings">
             <span className="material-symbols-outlined">settings</span>
             <span className="text-sm font-medium">Settings</span>
           </Link>
