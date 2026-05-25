@@ -58,6 +58,31 @@ export default function Settings() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!token || !confirm("PERMANENT ACTION: Are you sure you want to delete your account? This will erase all your assignments and tasks forever.")) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/me", {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        alert("Your account has been deleted.");
+        logout();
+      } else {
+        alert("Failed to delete account.");
+      }
+    } catch (err) {
+      alert("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (authLoading || (user && !formData.email)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -142,8 +167,12 @@ export default function Settings() {
           <h2 className="text-xl font-bold text-error mb-4">Danger Zone</h2>
           <div className="border border-error/30 rounded-2xl p-6 bg-error-container/5">
             <p className="text-sm text-on-surface-variant mb-6">Once you delete your account, there is no going back. Please be certain.</p>
-            <button className="text-error border border-error px-6 py-3 rounded-xl font-bold hover:bg-error hover:text-white transition-all active:scale-95">
-              Delete Account
+            <button 
+              onClick={handleDeleteAccount}
+              disabled={loading}
+              className="text-error border border-error px-6 py-3 rounded-xl font-bold hover:bg-error hover:text-white transition-all active:scale-95 disabled:opacity-50"
+            >
+              {loading ? 'Deleting...' : 'Delete Account'}
             </button>
           </div>
         </section>

@@ -34,6 +34,31 @@ router.put('/profile', protect, async (req, res) => {
   }
 });
 
+// @desc    Delete user account
+// @route   DELETE /api/auth/me
+router.delete('/me', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Delete assignments and tasks in a transaction
+    await prisma.$transaction([
+      prisma.task.deleteMany({
+        where: { assignment: { userId } }
+      }),
+      prisma.assignment.deleteMany({
+        where: { userId }
+      }),
+      prisma.user.delete({
+        where: { id: userId }
+      })
+    ]);
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // @desc    Register new user
 // @route   POST /api/auth/register
 router.post('/register', async (req, res) => {
