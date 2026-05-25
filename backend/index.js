@@ -5,6 +5,7 @@ const prisma = require('./db');
 const { generateTasks } = require('./utils/taskGenerator');
 const authRoutes = require('./routes/auth');
 const { protect } = require('./middleware/auth');
+const { assignmentSchema, taskUpdateSchema } = require('./middleware/validation');
 
 dotenv.config();
 
@@ -56,14 +57,15 @@ app.get('/api/assignments', protect, async (req, res) => {
 
 // Create a new assignment
 app.post('/api/assignments', protect, async (req, res) => {
-  const { title, dueDate, workingDays } = req.body;
-  
   try {
+    const validatedData = assignmentSchema.parse(req.body);
+    const { title, dueDate, workingDays } = validatedData;
+    
     const assignment = await prisma.assignment.create({
       data: {
         title,
         dueDate: new Date(dueDate),
-        workingDays: parseInt(workingDays) || 5,
+        workingDays: workingDays || 5,
         userId: req.user.id
       }
     });
@@ -79,6 +81,9 @@ app.post('/api/assignments', protect, async (req, res) => {
     
     res.status(201).json(assignmentWithTasks);
   } catch (error) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
     res.status(500).json({ error: 'Failed to create assignment', details: error.message });
   }
 });
@@ -111,9 +116,11 @@ app.get('/api/assignments/:id', protect, async (req, res) => {
 // Update task details
 app.patch('/api/tasks/:id', protect, async (req, res) => {
   const { id } = req.params;
-  const { completed, title, duration, category, date } = req.body;
 
   try {
+    const validatedData = taskUpdateSchema.parse(req.body);
+    const { completed, title, duration, category, date } = validatedData;
+
     // Fetch task first to check ownership
     const task = await prisma.task.findUnique({
       where: { id: parseInt(id) },
@@ -141,6 +148,9 @@ app.patch('/api/tasks/:id', protect, async (req, res) => {
 
     res.json(updatedTask);
   } catch (error) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
     res.status(500).json({ error: 'Failed to update task', details: error.message });
   }
 });

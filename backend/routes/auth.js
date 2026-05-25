@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../db');
 const { protect } = require('../middleware/auth');
+const { registerSchema, loginSchema } = require('../middleware/validation');
 
 const router = express.Router();
 
@@ -62,25 +63,22 @@ router.delete('/me', protect, async (req, res) => {
 // @desc    Register new user
 // @route   POST /api/auth/register
 router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Please add all fields' });
-  }
-
-  // Check if user exists
-  const userExists = await prisma.user.findUnique({ where: { email } });
-
-  if (userExists) {
-    return res.status(400).json({ error: 'User already exists' });
-  }
-
-  // Hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // Create user
   try {
+    const validatedData = registerSchema.parse(req.body);
+    const { name, email, password } = validatedData;
+
+    // Check if user exists
+    const userExists = await prisma.user.findUnique({ where: { email } });
+
+    if (userExists) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
     const user = await prisma.user.create({
       data: {
         name,
@@ -100,6 +98,9 @@ router.post('/register', async (req, res) => {
       res.status(400).json({ error: 'Invalid user data' });
     }
   } catch (error) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -107,9 +108,10 @@ router.post('/register', async (req, res) => {
 // @desc    Authenticate a user
 // @route   POST /api/auth/login
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    const validatedData = loginSchema.parse(req.body);
+    const { email, password } = validatedData;
+
     // Check for user email
     const user = await prisma.user.findUnique({ where: { email } });
 
@@ -124,6 +126,9 @@ router.post('/login', async (req, res) => {
       res.status(401).json({ error: 'Invalid credentials' });
     }
   } catch (error) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
     res.status(500).json({ error: error.message });
   }
 });
