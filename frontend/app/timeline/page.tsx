@@ -381,7 +381,10 @@ export default function Timeline() {
               <span className="material-symbols-outlined">ios_share</span>
               <span className="text-sm font-bold">Export to Notion</span>
             </button>
-            <button className="flex items-center justify-center gap-2 py-3 px-6 border border-outline text-on-surface rounded-xl hover:bg-surface-container-high transition-all active:scale-95">
+            <button 
+              onClick={() => window.print()}
+              className="flex items-center justify-center gap-2 py-3 px-6 border border-outline text-on-surface rounded-xl hover:bg-surface-container-high transition-all active:scale-95"
+            >
               <span className="material-symbols-outlined">download</span>
               <span className="text-sm font-bold">Download PDF</span>
             </button>
