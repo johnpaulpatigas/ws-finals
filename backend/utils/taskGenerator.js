@@ -60,17 +60,36 @@ async function generateWithAI(assignment, apiKey) {
   const cleanJson = text.replace(/```json|```/g, '').trim();
   const aiTasks = JSON.parse(cleanJson);
 
+  return scheduleTasks(aiTasks, assignment);
+}
+
+function scheduleTasks(tasks, assignment) {
   const startDate = new Date();
   const endDate = new Date(assignment.dueDate);
-  const diffTime = Math.abs(endDate - startDate);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const workingDaysPerWeek = assignment.workingDays || 5;
 
-  return aiTasks.map(task => {
-    const taskDate = new Date(startDate);
+  return tasks.map(task => {
+    // 1. Calculate ideal date based on phase (percentage between start and end)
+    const diffTime = Math.abs(endDate - startDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let taskDate = new Date(startDate);
     const daysToAdd = Math.floor(diffDays * (task.phase || 0.5));
     taskDate.setDate(startDate.getDate() + daysToAdd);
+
+    // 2. Adjust for weekends (always skip Sat/Sun if workingDays <= 5)
+    // If workingDays is 6, we skip only Sunday. If 7, we skip nothing.
+    let dayOfWeek = taskDate.getDay(); // 0 = Sun, 6 = Sat
     
-    if (taskDate > endDate) taskDate.setTime(endDate.getTime());
+    if (workingDaysPerWeek <= 5) {
+      if (dayOfWeek === 0) taskDate.setDate(taskDate.getDate() + 1); // Sun -> Mon
+      else if (dayOfWeek === 6) taskDate.setDate(taskDate.getDate() + 2); // Sat -> Mon
+    } else if (workingDaysPerWeek === 6) {
+      if (dayOfWeek === 0) taskDate.setDate(taskDate.getDate() + 1); // Sun -> Mon
+    }
+
+    // Ensure we don't exceed the due date
+    if (taskDate > endDate) taskDate = new Date(endDate);
 
     return {
       title: task.title,
@@ -83,11 +102,6 @@ async function generateWithAI(assignment, apiKey) {
 }
 
 function generateWithRules(assignment) {
-  const startDate = new Date();
-  const endDate = new Date(assignment.dueDate);
-  const diffTime = Math.abs(endDate - startDate);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
   const taskTemplates = [
     { title: "Define scope and initial goals", category: "Planning", icon: "edit_note", duration: "15 mins", phase: 0.1 },
     { title: "Research and gather 3 key sources", category: "Research", icon: "library_books", duration: "30 mins", phase: 0.2 },
@@ -99,21 +113,7 @@ function generateWithRules(assignment) {
     { title: "Final proofreading and formatting", category: "Review", icon: "done_all", duration: "20 mins", phase: 0.9 },
   ];
 
-  return taskTemplates.map(template => {
-    const taskDate = new Date(startDate);
-    const daysToAdd = Math.floor(diffDays * template.phase);
-    taskDate.setDate(startDate.getDate() + daysToAdd);
-    
-    if (taskDate > endDate) taskDate.setTime(endDate.getTime());
-
-    return {
-      title: template.title,
-      date: taskDate,
-      duration: template.duration,
-      category: template.category,
-      icon: template.icon
-    };
-  });
+  return scheduleTasks(taskTemplates, assignment);
 }
 
 module.exports = { generateTasks };
