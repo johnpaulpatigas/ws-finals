@@ -60,6 +60,31 @@ export default function Archive() {
     }
   }, [token, user]);
 
+  const handleDeleteAssignment = async (e: React.MouseEvent, id: number) => {
+    e.preventDefault(); // Prevent navigation to timeline
+    e.stopPropagation();
+
+    if (!token || !confirm("Are you sure you want to delete this assignment and all its tasks?")) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/assignments/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setAssignments(prev => prev.filter(a => a.id !== id));
+      } else {
+        alert("Failed to delete assignment.");
+      }
+    } catch (err) {
+      console.error("Error deleting assignment:", err);
+      alert("Something went wrong while deleting.");
+    }
+  };
+
   if (authLoading || (user && loading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -160,8 +185,17 @@ export default function Archive() {
                     </div>
                   </div>
                   
-                  <div className="hidden md:block text-outline group-hover:text-primary transition-colors">
-                    <span className="material-symbols-outlined">chevron_right</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => handleDeleteAssignment(e, assignment.id)}
+                      className="text-on-surface-variant hover:text-error hover:bg-error-container/20 p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                      title="Delete Assignment"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                    <div className="hidden md:block text-outline group-hover:text-primary transition-colors">
+                      <span className="material-symbols-outlined">chevron_right</span>
+                    </div>
                   </div>
                 </Link>
               );

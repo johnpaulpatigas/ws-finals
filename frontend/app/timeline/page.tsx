@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link";
+import { generateICS, downloadFile, CalendarEvent } from "../utils/calendar";
 
 interface Task {
   id: number;
@@ -92,6 +93,43 @@ export default function Timeline() {
     } catch (err) {
       console.error("Failed to update task:", err);
     }
+  };
+
+  const handleExportCalendar = () => {
+    if (!assignment || !assignment.tasks.length) return;
+
+    const events: CalendarEvent[] = assignment.tasks.map(task => {
+      const startDate = new Date(task.date);
+      // Default to 10:00 AM on the day if only date is provided, 
+      // though the DB likely has a full timestamp.
+      // If we want to be safe, let's ensure it's a valid date.
+      
+      const endDate = new Date(startDate);
+      
+      // Parse duration (e.g., "30 mins", "1 hour")
+      const durationMatch = task.duration.match(/(\d+)\s*(min|hour)/);
+      if (durationMatch) {
+        const value = parseInt(durationMatch[1]);
+        const unit = durationMatch[2];
+        if (unit === 'min') {
+          endDate.setMinutes(startDate.getMinutes() + value);
+        } else if (unit === 'hour') {
+          endDate.setHours(startDate.getHours() + value);
+        }
+      } else {
+        endDate.setMinutes(startDate.getMinutes() + 30); // Default 30 mins
+      }
+
+      return {
+        title: `${assignment.title}: ${task.title}`,
+        description: `Category: ${task.category}\nDuration: ${task.duration}`,
+        startDate,
+        endDate
+      };
+    });
+
+    const icsContent = generateICS(events);
+    downloadFile(`${assignment.title.replace(/\s+/g, '_')}_tasks.ics`, icsContent, 'text/calendar');
   };
 
   if (authLoading || (user && loading)) {
@@ -223,7 +261,10 @@ export default function Timeline() {
               <span className="material-symbols-outlined">download</span>
               <span className="text-sm font-bold">Download PDF</span>
             </button>
-            <button className="flex items-center justify-center gap-2 py-3 px-6 bg-primary text-on-primary rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-sm">
+            <button 
+              onClick={handleExportCalendar}
+              className="flex items-center justify-center gap-2 py-3 px-6 bg-primary text-on-primary rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-sm"
+            >
               <span className="material-symbols-outlined">calendar_add_on</span>
               <span className="text-sm font-bold">Add to Calendar</span>
             </button>

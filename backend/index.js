@@ -139,6 +139,42 @@ app.patch('/api/tasks/:id', protect, async (req, res) => {
   }
 });
 
+// Delete an assignment
+app.delete('/api/assignments/:id', protect, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Check ownership first
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!assignment) {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+
+    if (assignment.userId !== req.user.id) {
+      return res.status(401).json({ error: 'Not authorized' });
+    }
+
+    // Delete associated tasks first (if not handled by cascade)
+    // In our schema, we didn't specify onDelete: Cascade, so we should check.
+    // Actually, Prisma schema shows: assignment Assignment @relation(fields: [assignmentId], references: [id])
+    // If not specified, we should delete tasks manually or update schema.
+    await prisma.task.deleteMany({
+      where: { assignmentId: parseInt(id) }
+    });
+
+    await prisma.assignment.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.json({ message: 'Assignment deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete assignment', details: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
