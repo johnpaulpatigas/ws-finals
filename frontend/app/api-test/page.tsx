@@ -1,9 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+interface ApiStatus {
+  status: string;
+  database: string;
+  timestamp: string;
+  error?: string;
+}
 
 export default function ApiTest() {
-  const [status, setStatus] = useState<any>(null);
+  const [status, setStatus] = useState<ApiStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +26,7 @@ export default function ApiTest() {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Unknown error');
         setLoading(false);
       });
   }, []);
@@ -49,7 +57,7 @@ export default function ApiTest() {
       )}
 
       <div className="mt-6">
-        <a href="/" className="text-zinc-600 hover:underline">← Back to Home</a>
+        <Link href="/" className="text-zinc-600 hover:underline">← Back to Home</Link>
       </div>
     </div>
   );

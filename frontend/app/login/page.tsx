@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link";
+import Header from "../../components/Header";
+import Card from "../../components/Card";
+import Button from "../../components/Button";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -30,18 +33,17 @@ export default function Login() {
       } else {
         setError(data.error || "Login failed");
       }
-    } catch (err) {
+    } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
+
   };
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
-      <header className="bg-surface border-b border-outline-variant flex justify-center items-center w-full py-4">
-        <span className="text-xl font-bold text-primary">BiteSize</span>
-      </header>
+      <Header showNav={false} />
 
       <main className="flex-grow flex items-center justify-center px-container-padding-mobile py-section-gap">
         <div className="w-full max-w-[480px] mx-auto">
@@ -50,7 +52,7 @@ export default function Login() {
             <p className="text-on-surface-variant">Log in to keep track of your assignments</p>
           </div>
 
-          <div className="bg-surface-container-low border border-outline-variant p-8 rounded-2xl shadow-sm">
+          <Card className="p-8">
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               {error && (
                 <div className="bg-error-container text-on-error-container p-4 rounded-xl text-sm font-medium">
@@ -82,28 +84,25 @@ export default function Login() {
                 />
               </div>
 
-              <button 
-                className="w-full bg-primary text-on-primary py-4 px-6 rounded-xl text-lg font-bold shadow-md hover:shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70 mt-2" 
+              <Button 
+                className="w-full py-4 mt-2" 
+                size="lg"
                 type="submit"
-                disabled={loading}
+                loading={loading}
               >
-                {loading ? (
-                  <span className="material-symbols-outlined animate-spin">sync</span>
-                ) : (
-                  'Log In'
-                )}
-              </button>
+                Log In
+              </Button>
 
               <div className="text-center mt-2">
                 <p className="text-sm text-on-surface-variant">
-                  Don't have an account?{" "}
+                  Don&apos;t have an account?{" "}
                   <Link href="/register" className="text-primary font-bold hover:underline">
                     Sign Up
                   </Link>
                 </p>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       </main>
     </div>

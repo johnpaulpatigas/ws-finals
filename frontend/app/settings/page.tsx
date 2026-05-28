@@ -3,15 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
-import Link from "next/link";
+import Header from "../../components/Header";
+import LoadingScreen from "../../components/LoadingScreen";
 
 export default function Settings() {
   const router = useRouter();
   const { user, token, logout, updateUser, isLoading: authLoading } = useAuth();
   
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: user?.name || "",
+    email: user?.email || "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -19,11 +20,6 @@ export default function Settings() {
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
-    } else if (user) {
-      setFormData({
-        name: user.name || "",
-        email: user.email || "",
-      });
     }
   }, [user, authLoading, router]);
 
@@ -51,7 +47,7 @@ export default function Settings() {
         const data = await response.json();
         setMessage({ type: "error", text: data.error || "Failed to update profile." });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: "error", text: "Something went wrong." });
     } finally {
       setLoading(false);
@@ -76,7 +72,7 @@ export default function Settings() {
       } else {
         alert("Failed to delete account.");
       }
-    } catch (err) {
+    } catch {
       alert("Something went wrong.");
     } finally {
       setLoading(false);
@@ -84,37 +80,12 @@ export default function Settings() {
   };
 
   if (authLoading || (user && !formData.email)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined animate-spin text-primary text-4xl">sync</span>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
-      {/* TopAppBar */}
-      <header className="bg-surface border-b border-outline-variant flex justify-between items-center w-full px-container-padding-mobile md:px-container-padding-desktop py-4 max-w-[1200px] mx-auto">
-        <div className="flex items-center gap-8">
-          <span className="text-xl font-bold text-primary">BiteSize</span>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/">Focus</Link>
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/archive">Archive</Link>
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/settings">Settings</Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-on-surface-variant hidden sm:block">
-            {user?.name}
-          </span>
-          <button 
-            onClick={logout}
-            className="text-on-surface-variant flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
-          >
-            <span className="material-symbols-outlined">logout</span>
-          </button>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-[600px] mx-auto px-container-padding-mobile md:px-0 py-12 w-full">
         <div className="mb-10">

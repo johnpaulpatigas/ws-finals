@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
-import Link from "next/link";
 import { generateICS, downloadFile, CalendarEvent } from "../../utils/calendar";
 import confetti from "canvas-confetti";
+import Header from "../../components/Header";
+import ProgressBar from "../../components/ProgressBar";
+import LoadingScreen from "../../components/LoadingScreen";
 
 interface Task {
   id: number;
@@ -28,7 +30,7 @@ export default function Timeline() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const assignmentId = searchParams.get("id");
-  const { user, token, logout, isLoading: authLoading } = useAuth();
+  const { user, token, isLoading: authLoading } = useAuth();
   
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ export default function Timeline() {
         } else {
           setError("Failed to load assignment details.");
         }
-      } catch (err) {
+      } catch {
         setError("Something went wrong while fetching data.");
       } finally {
         setLoading(false);
@@ -90,7 +92,6 @@ export default function Timeline() {
           if (!prev) return null;
           const newTasks = prev.tasks.map(t => t.id === taskId ? { ...t, completed: !currentStatus } : t);
           
-          // Trigger confetti if all tasks are now completed
           if (!currentStatus && newTasks.every(t => t.completed)) {
             confetti({
               particleCount: 150,
@@ -185,13 +186,7 @@ export default function Timeline() {
 
     const events: CalendarEvent[] = assignment.tasks.map(task => {
       const startDate = new Date(task.date);
-      // Default to 10:00 AM on the day if only date is provided, 
-      // though the DB likely has a full timestamp.
-      // If we want to be safe, let's ensure it's a valid date.
-      
       const endDate = new Date(startDate);
-      
-      // Parse duration (e.g., "30 mins", "1 hour")
       const durationMatch = task.duration.match(/(\d+)\s*(min|hour)/);
       if (durationMatch) {
         const value = parseInt(durationMatch[1]);
@@ -202,7 +197,7 @@ export default function Timeline() {
           endDate.setHours(startDate.getHours() + value);
         }
       } else {
-        endDate.setMinutes(startDate.getMinutes() + 30); // Default 30 mins
+        endDate.setMinutes(startDate.getMinutes() + 30);
       }
 
       return {
@@ -218,11 +213,7 @@ export default function Timeline() {
   };
 
   if (authLoading || (user && loading)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined animate-spin text-primary text-4xl">sync</span>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error || !assignment) {
@@ -237,47 +228,14 @@ export default function Timeline() {
     );
   }
 
+  const progress = (assignment.tasks.filter(t => t.completed).length / assignment.tasks.length) * 100;
+
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
-      {/* TopAppBar */}
-      <header className="bg-surface border-b border-outline-variant flex justify-between items-center w-full px-container-padding-mobile md:px-container-padding-desktop py-4 max-w-[1200px] mx-auto">
-        <div className="flex items-center gap-8">
-          <span className="text-xl font-bold text-primary">BiteSize</span>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/">Focus</Link>
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/archive">Archive</Link>
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/settings">Settings</Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-on-surface-variant hidden sm:block">
-            {user?.name}
-          </span>
-          <button 
-            onClick={logout}
-            className="text-on-surface-variant flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
-          >
-            <span className="material-symbols-outlined">logout</span>
-          </button>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-[720px] mx-auto px-container-padding-mobile md:px-0 py-section-gap w-full">
-        {/* Progress Header */}
-        <div className="py-4 -mx-4 px-4 mb-8 border-b border-outline-variant/30">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-bold text-primary uppercase tracking-widest">Overall Progress</span>
-            <span className="text-xs font-bold text-primary">
-              {Math.round((assignment.tasks.filter(t => t.completed).length / assignment.tasks.length) * 100)}%
-            </span>
-          </div>
-          <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-            <div 
-              className="bg-primary h-full rounded-full transition-all duration-1000 ease-out" 
-              style={{ width: `${(assignment.tasks.filter(t => t.completed).length / assignment.tasks.length) * 100}%` }}
-            ></div>
-          </div>
-        </div>
+        <ProgressBar progress={progress} />
 
         {/* Success Header */}
         <div className="mb-12 text-center md:text-left">
@@ -295,7 +253,7 @@ export default function Timeline() {
             </button>
           </div>
           <h1 className="text-3xl font-bold text-on-surface mb-2">We&apos;ve broken it down for you.</h1>
-          <p className="text-lg text-on-surface-variant leading-relaxed">Your project <span className="text-primary font-bold">"{assignment.title}"</span> is now in manageable chunks.</p>
+          <p className="text-lg text-on-surface-variant leading-relaxed">Your project <span className="text-primary font-bold">&quot;{assignment.title}&quot;</span> is now in manageable chunks.</p>
         </div>
 
         {/* Timeline Section */}

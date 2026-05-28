@@ -1,14 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./context/AuthContext";
-import Link from "next/link";
+import Header from "../components/Header";
+import LoadingScreen from "../components/LoadingScreen";
+import Card from "../components/Card";
+import Button from "../components/Button";
 
 export default function Home() {
   const router = useRouter();
-  const { user, token, logout, isLoading } = useAuth();
+  const { user, token, isLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -55,38 +57,12 @@ export default function Home() {
   };
 
   if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined animate-spin text-primary text-4xl">sync</span>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
-      {/* TopAppBar */}
-      <header className="bg-surface border-b border-outline-variant flex justify-between items-center w-full px-container-padding-mobile md:px-container-padding-desktop py-4 max-w-[1200px] mx-auto">
-        <div className="flex items-center gap-8">
-          <span className="text-xl font-bold text-primary">BiteSize</span>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/">Focus</Link>
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/archive">Archive</Link>
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/settings">Settings</Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-on-surface-variant hidden sm:block">
-            {user.name}
-          </span>
-          <button 
-            onClick={logout}
-            className="text-on-surface-variant flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
-            title="Log Out"
-          >
-            <span className="material-symbols-outlined">logout</span>
-          </button>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content Canvas */}
       <main className="flex-grow flex items-center justify-center px-container-padding-mobile py-section-gap">
@@ -100,7 +76,7 @@ export default function Home() {
           </div>
 
           {/* Centralized Form Component */}
-          <div className="bg-surface-container-low border border-outline-variant p-8 md:p-12 rounded-2xl shadow-sm">
+          <Card className="md:p-12">
             <form onSubmit={handleSubmit} className="flex flex-col gap-8 text-left">
               {/* Field 1: Assignment Input */}
               <div className="flex flex-col gap-2">
@@ -150,17 +126,18 @@ export default function Home() {
 
               {/* CTA Button */}
               <div className="mt-4">
-                <button 
-                  className="w-full bg-primary text-on-primary py-5 px-8 rounded-2xl text-xl font-bold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70" 
+                <Button 
+                  className="w-full py-5" 
+                  size="lg"
                   type="submit"
-                  disabled={loading}
+                  loading={loading}
+                  icon="bolt"
                 >
-                  <span className="material-symbols-outlined">{loading ? 'sync' : 'bolt'}</span>
                   {loading ? 'Breaking it down...' : 'Break it down'}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
+          </Card>
 
           {/* Instructional Cards */}
           <div className="mt-section-gap grid grid-cols-1 md:grid-cols-3 gap-6 text-left">

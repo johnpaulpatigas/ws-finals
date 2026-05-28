@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link";
+import Header from "../../components/Header";
+import LoadingScreen from "../../components/LoadingScreen";
 
 interface Task {
   id: number;
@@ -20,7 +22,7 @@ interface Assignment {
 
 export default function Archive() {
   const router = useRouter();
-  const { user, token, logout, isLoading: authLoading } = useAuth();
+  const { user, token, isLoading: authLoading } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,7 +50,7 @@ export default function Archive() {
         } else {
           setError("Failed to load your assignments.");
         }
-      } catch (err) {
+      } catch {
         setError("Something went wrong while fetching your data.");
       } finally {
         setLoading(false);
@@ -86,37 +88,12 @@ export default function Archive() {
   };
 
   if (authLoading || (user && loading)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <span className="material-symbols-outlined animate-spin text-primary text-4xl">sync</span>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
-      {/* TopAppBar */}
-      <header className="bg-surface border-b border-outline-variant flex justify-between items-center w-full px-container-padding-mobile md:px-container-padding-desktop py-4 max-w-[1200px] mx-auto">
-        <div className="flex items-center gap-8">
-          <span className="text-xl font-bold text-primary">BiteSize</span>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/">Focus</Link>
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/archive">Archive</Link>
-            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/settings">Settings</Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-on-surface-variant hidden sm:block">
-            {user?.name}
-          </span>
-          <button 
-            onClick={logout}
-            className="text-on-surface-variant flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
-          >
-            <span className="material-symbols-outlined">logout</span>
-          </button>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-[800px] mx-auto px-container-padding-mobile md:px-0 py-12 w-full">
         <div className="mb-10 text-center md:text-left">
