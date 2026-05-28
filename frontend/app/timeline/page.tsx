@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link";
-import { generateICS, downloadFile, CalendarEvent } from "../utils/calendar";
+import { generateICS, downloadFile, CalendarEvent } from "../../utils/calendar";
 import confetti from "canvas-confetti";
 
 interface Task {
