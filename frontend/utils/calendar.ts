@@ -10,7 +10,7 @@ export function generateICS(events: CalendarEvent[]): string {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   };
 
-  let icsContent = [
+  const icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//BiteSize//NONSGML v1.0//EN',
