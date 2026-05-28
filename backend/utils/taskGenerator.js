@@ -35,7 +35,7 @@ async function generateTasks(assignment) {
 
 async function generateWithAI(assignment, apiKey) {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
   const prompt = `
     Break down the following assignment into 5-8 specific, actionable micro-tasks.
