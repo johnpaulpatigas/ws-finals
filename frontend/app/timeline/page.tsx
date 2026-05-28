@@ -171,14 +171,14 @@ export default function Timeline() {
     }
   };
 
-  const handleExportNotion = () => {
+  const handleCopyMarkdown = () => {
     if (!assignment) return;
 
     const markdown = `# ${assignment.title}\n\n` + 
       assignment.tasks.map(task => `- [${task.completed ? 'x' : ' '}] **${task.title}** (${task.duration}) - ${task.category}`).join('\n');
     
     navigator.clipboard.writeText(markdown);
-    alert("Copied to clipboard as Markdown! You can now paste it into Notion.");
+    alert("Copied to clipboard as Markdown!");
   };
 
   const handleExportCalendar = () => {
@@ -355,18 +355,18 @@ export default function Timeline() {
           <h2 className="text-xl font-bold text-on-surface mb-6 text-center">Ready to get started?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button 
-              onClick={handleExportNotion}
+              onClick={handleCopyMarkdown}
               className="flex items-center justify-center gap-2 py-3 px-6 border border-outline text-on-surface rounded-xl hover:bg-surface-container-high transition-all active:scale-95"
             >
-              <span className="material-symbols-outlined">ios_share</span>
-              <span className="text-sm font-bold">Export to Notion</span>
+              <span className="material-symbols-outlined">content_copy</span>
+              <span className="text-sm font-bold">Copy Markdown</span>
             </button>
             <button 
               onClick={() => window.print()}
               className="flex items-center justify-center gap-2 py-3 px-6 border border-outline text-on-surface rounded-xl hover:bg-surface-container-high transition-all active:scale-95"
             >
-              <span className="material-symbols-outlined">download</span>
-              <span className="text-sm font-bold">Download PDF</span>
+              <span className="material-symbols-outlined">print</span>
+              <span className="text-sm font-bold">Print as PDF</span>
             </button>
             <button 
               onClick={handleExportCalendar}
