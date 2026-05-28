@@ -39,7 +39,7 @@ export default function Login() {
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
-      <header className="bg-surface border-b border-outline-variant flex justify-center items-center w-full py-4 sticky top-0 z-50">
+      <header className="bg-surface border-b border-outline-variant flex justify-center items-center w-full py-4">
         <span className="text-xl font-bold text-primary">BiteSize</span>
       </header>
 

@@ -240,12 +240,13 @@ export default function Timeline() {
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-hanken">
       {/* TopAppBar */}
-      <header className="bg-surface border-b border-outline-variant flex justify-between items-center w-full px-container-padding-mobile md:px-container-padding-desktop py-4 max-w-focus-width mx-auto sticky top-0 z-50">
+      <header className="bg-surface border-b border-outline-variant flex justify-between items-center w-full px-container-padding-mobile md:px-container-padding-desktop py-4 max-w-[1200px] mx-auto">
         <div className="flex items-center gap-8">
           <span className="text-xl font-bold text-primary">BiteSize</span>
           <nav className="hidden md:flex items-center gap-6">
             <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/">Focus</Link>
             <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/archive">Archive</Link>
+            <Link className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="/settings">Settings</Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">
@@ -261,31 +262,9 @@ export default function Timeline() {
         </div>
       </header>
 
-      {/* SideNavBar (Desktop only) */}
-      <aside className="hidden lg:flex flex-col h-full w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant p-6 pt-24">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-primary">BiteSize</h2>
-          <p className="text-sm font-medium text-on-surface-variant">Tiny steps, big results.</p>
-        </div>
-        <nav className="flex flex-col gap-2">
-          <Link className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-[0.98]" href="/">
-            <span className="material-symbols-outlined">edit_note</span>
-            <span className="text-sm font-medium">Plan</span>
-          </Link>
-          <Link className="flex items-center gap-3 p-3 bg-secondary-container text-on-secondary-container rounded-xl font-bold transition-all active:scale-[0.98]" href="/archive">
-            <span className="material-symbols-outlined">checklist</span>
-            <span className="text-sm font-bold">Archive</span>
-          </Link>
-          <Link className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all active:scale-[0.98]" href="/settings">
-            <span className="material-symbols-outlined">settings</span>
-            <span className="text-sm font-medium">Settings</span>
-          </Link>
-        </nav>
-      </aside>
-
-      <main className="max-w-[720px] mx-auto px-container-padding-mobile md:px-0 py-section-gap w-full lg:ml-[30%] xl:ml-[35%]">
+      <main className="max-w-[720px] mx-auto px-container-padding-mobile md:px-0 py-section-gap w-full">
         {/* Progress Header */}
-        <div className="sticky top-[73px] bg-background/95 backdrop-blur-sm z-40 py-4 -mx-4 px-4 mb-8 border-b border-outline-variant/30">
+        <div className="py-4 -mx-4 px-4 mb-8 border-b border-outline-variant/30">
           <div className="flex justify-between items-center mb-2">
             <span className="text-xs font-bold text-primary uppercase tracking-widest">Overall Progress</span>
             <span className="text-xs font-bold text-primary">
